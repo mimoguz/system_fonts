@@ -33,10 +33,18 @@ class SystemFonts {
       ];
     }
     if (Platform.isMacOS) {
-      return ['/Library/Fonts/', '/System/Library/Fonts/', '${Platform.environment['HOME']}/Library/Fonts/'];
+      return [
+        '/Library/Fonts/',
+        '/System/Library/Fonts/',
+        '${Platform.environment['HOME']}/Library/Fonts/'
+      ];
     }
     if (Platform.isLinux) {
-      return ['/usr/share/fonts/', '/usr/local/share/fonts/', '${Platform.environment['HOME']}/.local/share/fonts/'];
+      return [
+        '/usr/share/fonts/',
+        '/usr/local/share/fonts/',
+        '${Platform.environment['HOME']}/.local/share/fonts/'
+      ];
     }
     return [];
   }
@@ -52,11 +60,13 @@ class SystemFonts {
         if (!Directory(path).existsSync()) {
           continue;
         }
-        fontFilePaths.addAll(Directory(path).listSync());
+        fontFilePaths.addAll(
+            Directory(path).listSync(followLinks: true, recursive: true));
       }
 
       _fontPaths.addAll(fontFilePaths
-          .where((element) => element.path.endsWith('.ttf') || element.path.endsWith('.otf'))
+          .where((element) =>
+              element.path.endsWith('.ttf') || element.path.endsWith('.otf'))
           .map((e) => e.path)
           .toList());
     }
@@ -68,7 +78,8 @@ class SystemFonts {
   ///  representing the full paths to the font files.
   Map<String, String> getFontMap() {
     if (_fontMap.isEmpty) {
-      _fontMap.addAll(Map.fromEntries(getFontPaths().map((e) => MapEntry(p.basenameWithoutExtension(e), e))));
+      _fontMap.addAll(Map.fromEntries(getFontPaths()
+          .map((e) => MapEntry(p.basenameWithoutExtension(e), e))));
     }
     return _fontMap;
   }
