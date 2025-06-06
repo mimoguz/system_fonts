@@ -2,6 +2,7 @@ library system_fonts;
 
 export 'widget.dart';
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -49,27 +50,46 @@ class SystemFonts {
     return [];
   }
 
+  List<String> _getLinuxFontPaths() {
+    var result = Process.runSync("fc-list", [":file"]);
+    if (result.exitCode != 0) {
+      return [];
+    }
+    final String output = result.stdout;
+    return output.split("\n").map((line) => line.split(":").first).toList();
+  }
+
   /// Returns:
   ///   A list of strings representing the paths of the font files in the system.
   List<String> getFontPaths() {
-    if (_fontPaths.isEmpty) {
-      final paths = _fontDirectories;
-      final List<FileSystemEntity> fontFilePaths = [];
-
-      for (final path in paths) {
-        if (!Directory(path).existsSync()) {
-          continue;
-        }
-        fontFilePaths.addAll(
-            Directory(path).listSync(followLinks: true, recursive: true));
-      }
-
-      _fontPaths.addAll(fontFilePaths
-          .where((element) =>
-              element.path.endsWith('.ttf') || element.path.endsWith('.otf'))
-          .map((e) => e.path)
-          .toList());
+    if (_fontPaths.isNotEmpty) {
+      return _fontPaths;
     }
+
+    if (Platform.isLinux) {
+      _fontPaths.addAll(_getLinuxFontPaths());
+      if (_fontPaths.isNotEmpty) {
+        return _fontPaths;
+      }
+    }
+
+    final paths = _fontDirectories;
+    final List<FileSystemEntity> fontFilePaths = [];
+
+    for (final path in paths) {
+      if (!Directory(path).existsSync()) {
+        continue;
+      }
+      fontFilePaths
+          .addAll(Directory(path).listSync(followLinks: true, recursive: true));
+    }
+
+    _fontPaths.addAll(fontFilePaths
+        .where((element) =>
+            element.path.endsWith('.ttf') || element.path.endsWith('.otf'))
+        .map((e) => e.path)
+        .toList());
+
     return _fontPaths;
   }
 
